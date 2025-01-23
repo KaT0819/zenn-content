@@ -1,0 +1,39 @@
+{
+  "title": "AWS SES（Simple Email Service）のメモ",
+  "closed": false,
+  "archived": false,
+  "created_at": "2024-06-21",
+  "comments": [
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## 概要\nhttps://aws.amazon.com/jp/ses/\n\n## 料金\nhttps://aws.amazon.com/jp/ses/pricing/\n\n### 無料枠\n- SES の使用開始後の最初の 12 か月間は、毎月最大 3,000 件のメッセージ料金が無料\n- 無料枠対象\n    - 送信 E メール\n    - 受信 E メール\n    - Virtual Deliverability Manager の送信 E メール処理\n\nメッセージ＝基本的には1つの送信や受信するメール\n送信と受信合算して月3000件までが無料ということ。\nVirtual Deliverability Manager の送信 E メールについては1つの送信で2メッセージになる。\n\n\n### 料金体系\n\n| サービスタイプ           | 料金                        | 追加料金 |\n|---------------------------|-----------------------------|----------------------------------------------------------------------------------------------------|\n| アウトバウンドメール       | 0.10 USD/1,000 件の E メール | 送信する添付ファイルの 1 ギガバイト (GB) のデータごとに 0.12 USD*                                  |\n| インバウンドメール         | 0.10 USD/1,000 件の E メール | 着信 E メールチャンク 1,000 件につき 0.09 USD (詳細については、「料金の詳細」をご覧ください)           |\n| Mail Manager              |                             | |\n| -オープンイングレスエンドポイント** | エンドポイントあたり 50 USD/月 | |\n| -E メール処理***           | 0.15 USD/1,000 件の E メール | 着信 E メールチャンク 1,000 件につき 0.09 USD (詳細については、「料金の詳細」をご覧ください) |\n| -アーカイブ               | 2 USD/GB (取り込まれた E メール) | 0.19 USD/GB/月 (アーカイブの保存と検索) |\n| -E メールのアドオン        | 選択したアドオンソリューションによって異なります | |\n\nアウトバウンドメールは送信メール、インバウンドメールは受信メール\nざっくり1,000件単位で料金が増えていくと思っておけばよい。\n\nその他\n- 送信先のIPを固定（専用IPを使用）したい場合、1IPあたり月24.9ドル\n- 送信メールの添付ファイルデータ 1 ギガバイト (GB) ごとに 0.12USD\n- 受信メールのデータ量256Kバイトで受信メールチャンク 1 単位として計算し、1000チャンク毎に0.09ドル、256K未満の場合はチャンク0扱い\n\n## ガイド\nhttps://docs.aws.amazon.com/ses/latest/dg/Welcome.html\n"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## 開始方法\n### 個別メールの場合\nアドレスを登録すると、登録したアドレスに承認用のメールが送られてくるので、メールのリンクをクリックして送信可能に。\nコンソールからテストメール送信確認などして送信テスト可能。\n\n### ドメインの場合\n- ドメインを登録したあと、AWS側でドメインの検証が行われる。\n- ドメインの検証が通るには、おそらくDKIMの設定をDNSに登録し、それが検証通らないとダメそう。\n    DNSの設定をしくじって1日程度たってから間違いに気づきDNSを修正したが、3日たっても検証通らず検証エラーに。\n    検証エラーになると、再検証の依頼を出せるが、結局1日たっても検証されないので、一度SESのドメイン設定を削除して、作り直したら1時間ほどで検証通りました。\n- 検証には最大3日掛かると注意書きがあるが、DNS側のTTLにもよるが、日本で設定している分には数時間～せいぜい1日たっても検証通らない場合は設定がおかしいと思った方が良い。\n    本番用は上記の通り時間を要したが、STG用に作成した設定は1時間立たずに検証済みになりました。\n- ちなみに、SESを再作成した際、DKIMのDNS登録内容が変わるかと思いましたが、削除前と同じ値。都度ランダムではなく、指定ドメインで固定なのかも？\n- DKIMの設定値はTXTレコードではなく、CNAMEに設定する。設定内容はコンソールですべて確認可能なので、そこからコピペ可能。レコード情報をCSVダウンロードも可能なので、DNS管理者が別だったりする場合はダウンロードした内容を共有してあげるのも良いでしょう。\n\nhttps://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#verify-domain-procedure\n",
+      "body_updated_at": "2024-06-22"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## Laravelからの使用\nただ送るだけなら、AWSアカウントのキーとリージョンを環境変数で指定して、メール用の環境変数にチャネルses、sesのhostを指定したら基本OK\nFromのアドレスは、普通のサービスだと自身のドメインを指定すると思いますので、\n事前にSESにカスタムFROM用ドメインを登録し、MXレコードやSPF用のレコードをDNSに登録して検証済みになっておく必要があります。\n昨今のご時世的にはSPF、DKIM、DMARCはすべて設定しておくのが良いでしょう。\n\n- SES利用のためのIAMポリシー\n    https://docs.aws.amazon.com/ja_jp/ses/latest/dg/control-user-access.html\n- \n\nこれがまとまっていると思います。\nhttps://qiita.com/hiroaki-u/items/986b523998d5e415fc4d"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## メール受信\n受信可能なリージョンが意外と少ないので注意。\n東京は利用可能。東京からは送れないという1年位前の記事も見たので、割と最近受信できるようになったのかもしれません。\n\n| 地域名                    | リージョン    | メール受信エンドポイント                           |\n|---------------------------|---------------|---------------------------------------------------|\n| 米国東部（バージニア州北部）| us-east-1     | inbound-smtp.us-east-1.amazonaws.com               |\n| 米国東部（オハイオ）        | us-east-2     | inbound-smtp.us-east-2.amazonaws.com               |\n| 米国西部（オレゴン）        | us-west-2     | inbound-smtp.us-west-2.amazonaws.com               |\n| アジア太平洋（ジャカルタ）  | ap-southeast-3| inbound-smtp.ap-southeast-3.amazonaws.com          |\n| アジア太平洋（シンガポール）| ap-southeast-1| inbound-smtp.ap-southeast-1.amazonaws.com          |\n| アジア太平洋（シドニー）    | ap-southeast-2| inbound-smtp.ap-southeast-2.amazonaws.com          |\n| アジア太平洋（東京）        | ap-northeast-1| inbound-smtp.ap-northeast-1.amazonaws.com          |\n| カナダ（中部）              | ca-central-1  | inbound-smtp.ca-central-1.amazonaws.com            |\n| ヨーロッパ（フランクフルト）| eu-central-1  | inbound-smtp.eu-central-1.amazonaws.com            |\n| ヨーロッパ（アイルランド）  | eu-west-1     | inbound-smtp.eu-west-1.amazonaws.com               |\n| ヨーロッパ（ロンドン）      | eu-west-2     | inbound-smtp.eu-west-2.amazonaws.com               |\n\nSESでメール受信するためには、MXレコードに上記のメール受信エンドポイントを登録する必要があります。\n送信用（カスタムFROM用）とは別に登録が必要です。また、送信用と同じサブドメインにせず別ドメインになる点、注意しましょう。\n\n設定例：\n　送信用：mail.example.com\n　受信用：example.com\n\nhttps://docs.aws.amazon.com/ses/latest/dg/regions.html\n\n\n## メール受信ルール\nあとで"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## SESのメール受信\nいわゆるメーラーのような受信ボックス的なものではない。\nメアドやドメインを事前に登録しておき、そこに対してメールが送られたことをきっかけにAWSのサービスを起動する系の統合機能\n\n受信ルールを設定することで実現する。\n\n## 受信ルール\n送信同様、個別のアドレスかドメインを指定し、指定先にメールを受信した後のアクションを取り決めていく。\nアクションは1つの受信ルールに対して複数設定が可能。\nアクションの並び順を指定できるため、並列で動作するというよりはシーケンシャルに順番に動作する感じか？　調べ中\n\nIP アドレスフィルタも可能\n\n### アクション\n- Amazon S3 バケットへの配信\n- Amazon SNS トピックへの公開\n- Amazon WorkMail への送信\n- Amazon Lambdaの実行\n\n## 受信ルールセット\n受信ルールセットは、複数の受信ルールをひとまとめにする入れ物。\n- 受信ルールを作るために、まずは受信ルールセットを作る必要があります。\n- 受信ルールセットを有効化することで受信ルールが適用されます。作成時は無効状態\n- 有効化できる受信ルールセットはリージョン単位で1つのみ\n- 受信ルールセット内の受信ルールは順番を持ち、並び順の上から順に受信ルールを評価していきます。受信ルールに該当するアドレスやドメインがあればアクションを実行。\n- 順序が上の受信ルールを実施した後も、次の受信ルールを評価して、該当すればアクションを実行、とすべての受信ルールを評価するまで行います。\n![](https://storage.googleapis.com/zenn-user-upload/925253d432c0-20240622.png)\n\n\n## 参考\n概要\nhttps://docs.aws.amazon.com/ja_jp/ses/latest/dg/receiving-email.html\n概念とユースケース（ここ見るとイメージ沸きやすい）\nhttps://docs.aws.amazon.com/ja_jp/ses/latest/dg/receiving-email-concepts.html"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-06-22",
+      "body_markdown": "## メールの転送\n直接的な転送機能はSESとしては、受信ルールを用いてWorkMailへ送信するのが王道か。\n\n### WorkMail\n- 1ユーザあたり4ドル/月かかる\n- 東京リージョンでは提供されていない。下記3リージョンのみ（2024年6月時点）\n    eu-east-1：米国東部 (バージニア北部)\n    eu-west-2：米国西部 (オレゴン)\n    eu-west-1：欧州 (アイルランド)\n\n小規模だったり、送信メインで受信はほぼない、みたいだとコスト面で微妙\n海外リージョンを通ることに抵抗がある場合も現状選択できない。\n\nLambda実行アクションを用いるのがよさそう。\nお試しで実装してみると、SESからLambdaに送られるイベントの中にはメール本文が含まれていないため、S3への配信アクションもセット必須となりそう。\n\n## 参考\nhttps://dev.classmethod.jp/articles/ses-received-from-unspecified-people/\nhttps://dev.classmethod.jp/articles/ses-lambda-mail-transfer/\n"
+    }
+  ]
+}

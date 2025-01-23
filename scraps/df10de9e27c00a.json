@@ -1,0 +1,51 @@
+{
+  "title": "Stripeでの3Dセキュア対応について",
+  "closed": false,
+  "archived": false,
+  "created_at": "2024-11-18",
+  "comments": [
+    {
+      "author": "kat",
+      "created_at": "2024-11-19",
+      "body_markdown": "\nhttps://docs.stripe.com/payments/3d-secure?locale=ja-JP\n\nhttps://stripe.com/jp/guides/3d-secure-2\n\nhttps://qiita.com/hideokamoto/items/7920051d7476439e5a5e\n\nhttps://prtimes.jp/main/html/rd/p/000000078.000077879.html\n\n\n"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-11-19",
+      "body_markdown": "Stripe：クレジットカード・セキュリティガイドラインについて\nhttps://support.stripe.com/questions/3ds-mandate-in-japan\n\n\n## チェックポイント\n- Charges API、Orders APIを使用しているか？\n    - Payment Intents APIに移行推奨\n- 支払いにおいてサードパーティとの連携があるか？\n- 顧客向けのコミュニケーション\n    - サポート体制を作っておく（エンジニアリングとはずれるが、大事）\n\n![](https://storage.googleapis.com/zenn-user-upload/0916c6317991-20241119.png)\n\n# [クレジットカード・セキュリティガイドラインの改訂と3Dセキュアの導入](https://support.stripe.com/questions/3ds-mandate-in-japan)\n\n## クレジットカード・セキュリティガイドラインの改訂\n\n### 改訂の背景と目的\n\n- 2024年3月15日に改訂された「クレジットカード・セキュリティガイドライン」は、クレジットカード取引に関わる事業者が実施すべきセキュリティ対策を定めている。\n\n- 不正対策の一環として、オンライン販売を行う全ての加盟店は、2025年3月末までに3Dセキュアの導入を完了する必要がある。\n\n### 3Dセキュアの概要\n\n- 3Dセキュア（3DS）は、クレジットカード取引に追加の認証レイヤーを提供し、不正使用によるカード支払いに対する賠償責任からビジネスを保護する仕組みである。\n\n- この仕組みは、顧客のカード発行会社が追加の認証を要求することで、取引の安全性を高める。\n\n## Stripeにおける3Dセキュアの適用\n\n### 適用開始日と段階的導入\n\n- Stripeは2025年3月31日から全ての対象取引に3Dセキュアを適用する。\n\n- 2025年1月からは、段階的に3Dセキュアの認証を適用し、2025年3月31日には100%の取引に拡大する。\n\n### 加盟店の準備と実装\n\n- 加盟店は、決済の取引失敗を避けるために、2024年末までに必要な実装を行う必要がある。\n\n- 3Dセキュアへの対応準備が間に合わない場合、除外申請が可能だが、2025年3月31日からは全ての取引に3Dセキュアが必要となる。\n\n## APIの実装と移行\n\n### Charges APIとOrders APIの制限\n\n- Charges APIおよびOrders APIは3Dセキュア2をサポートしておらず、これらを使用している場合、クレジットカードの支払いは失敗する。\n\n- 支払い拒否の増加を避けるため、早めにPayment Intents APIに移行することが推奨される。\n\n### Payment Intents APIの利用\n\n- Payment Intents APIでは3Dセキュアを通じて支払いを受け付けることができ、顧客に支払いの認証を促すことが可能である。\n\n- サーバー側で決済を確定している場合、クライアント側で3Dセキュア認証を完了させるために追加の処理が必要となる。\n\n## サードパーティとの連携\n\n### サードパーティの影響\n\n- サードパーティやプラットフォームを通じてStripeを実装している場合、仕様はサードパーティに依存するため、直接確認が必要である。\n\n- サードパーティが3Dセキュアに向けて準備や更新を行っていることを確認することが重要である。\n\n### 顧客向けのコミュニケーション\n\n- 3Dセキュアに関する顧客からの問い合わせ対応の準備が必要であり、カスタマーサポートへの対応や説明記事を用意することが求められる。\n\n## 不正対策とリスク管理\n\n### Radarの活用\n\n- Stripeは、機械学習を活用した不正対策プロダクト「Radar」を提供しており、数百のシグナルを基にリスク判定を行う。\n\n- 3Dセキュアを動的にリクエストするためのデフォルトのRadarルールを設定することができ、顧客の追加認証をリクエストすることが可能である。\n\n### リスクカスタマイズの重要性\n\n- Radar for Teamsを利用することで、事業の顧客特性に合わせた独自のリスクをカスタマイズすることができる。\n\n- リスクレベルや特定のメタデータに基づいて3Dセキュアをリクエストすることで、正当な支払いの過度なブロックを防ぎ、収益の最大化につなげることが期待される。\n\n## よくある質問\n\n### 対面取引の扱い\n\n- 物理的カードを使用する対面取引は、3Dセキュアの導入基準の対象外である。\n\n### 3Dセキュア未導入の影響\n\n- 罰金等の罰則規定はないが、加盟店のセキュリティ対策が不十分な場合、カード会社等による調査が行われ、必要な対策を講じるよう指導される。\n\n### 手数料について\n\n- 一般的に、3Dセキュア認証によって手数料は発生しないが、カスタム料金体系が設定されている場合は手数料が課されることがある。\n\n### サードパーティ利用時の対応\n\n- サードパーティ/プラグインを通じてStripeを利用している場合、3Dセキュアに伴う変更が必要になる可能性があるため、迅速にサードパーティへ連絡し、準備を確認することが推奨される。\n\n",
+      "body_updated_at": "2024-11-19"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-11-19",
+      "body_markdown": "## 3Dセキュア対応テストカード\nhttps://docs.stripe.com/testing#regulatory-cards"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-11-19",
+      "body_markdown": "Casher使ってさらっと実装してそう。\nぱっと見特別な実装してなさそうだが、Exceptionの処理が肝なんだろうか？\nhttps://www.youtube.com/watch?v=iqbmU-hkd6o\n\ngit\nhttps://github.com/raakeshkumar/laravel-stripe-demo\n\nやってるのは公式ドキュメントのこの辺の実装と同じっぽい。\nhttps://laravel.com/docs/8.x/billing#handling-failed-payments\n\n\nとりあえずException入れたら3Dセキュアのデモは動いた。が、サブスクが購入された際のアプリ側のステータス更新等が動作しない（例外発生し、Catch内で3Dセキュアページにリダイレクトしているためトランザクションはロールバックされる）ので、リダイレクト先でやるでいいのか？\n\n",
+      "body_updated_at": "2024-11-19"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-12-15",
+      "body_markdown": "## API を使用して 3DS を手動でリクエストする\n\nPaymentIntent または SetupIntent の作成または確認時、あるいは Checkout セッション の作成時に最適化する対象に応じて、payment_method_options[card][request_three_d_secure] を any または challenge に設定します。\n\nこのプロセスは、1 回限りの支払いの場合も、今後の支払いのために支払い方法を設定する場合も同じ。\nこのパラメーターを指定すると、Stripe は 3DS の実行を試み、PaymentIntent、SetupIntent、または Checkout セッションの 動的 3D Secure Radar ルール を上書きします。\n\nとある。\nサブスクの作成やカード情報の更新でも同じパラメータが使えるか？\n\n\nhttps://docs.stripe.com/payments/3d-secure/authentication-flow?api-integration=checkout-session-api#manual-three-ds\n\n```php\n$stripe->paymentIntents->create([\n  'amount' => 1000,\n  'currency' => 'usd',\n  'payment_method_options' => ['card' => ['request_three_d_secure' => 'any']],\n]);\n```\n\nrequest_three_d_secure を any : 3DS認証しないかも？\nrequest_three_d_secure を challenge : 3DS認証する\n\n\nStripe Elementsを使っている場合は、この辺が修正ポイントか？\nhttps://docs.stripe.com/payments/3d-secure/authentication-flow?api-integration=payment-intents-api#confirm-payment-intent\n\n```js\nstripe.confirmCardPayment(\n  '{{PAYMENT_INTENT_CLIENT_SECRET}}',\n  {\n    payment_method: {card: cardElement},\n    return_url: 'https://example.com/return_url'\n  },\n  // Disable the default next action handling.\n  {handleActions: false}\n).then(function(result) {\n  // Handle result.error or result.paymentIntent\n  // More details in Step 2.\n});\n```\n\nreturn_urlを指定して\n\n\n\n",
+      "body_updated_at": "2024-12-15"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-12-21",
+      "body_markdown": "## 3Dセキュアの「3D」とは\n3DセキュアのDは「Domain（ドメイン）」を指し、以下の3つのドメイン（領域）が連携することを意味します。\n\n・イシュアドメイン：カード発行会社（イシュア）とカード会員\n・アクワイアラドメイン：加盟店管理会社（アクワイアラ）とEC加盟店\n・インターオペラビリティ（相互運用）ドメイン：国際カードブランド（Visa・JCB・Mastercardなど）\n\nhttps://www.dnp.co.jp/biz/column/detail/20172095_4969.html"
+    },
+    {
+      "author": "kat",
+      "created_at": "2024-12-21",
+      "body_markdown": "## フリクションレス認証\nフリクションレス：必要な情報を入力せずに処理が完了する仕組み。認証においては認証情報（ワンタイムパスワード等）の入力せずに認証が完了するという意味合い\n\n![](https://storage.googleapis.com/zenn-user-upload/3fe587955f8e-20241221.png)"
+    },
+    {
+      "author": "kat",
+      "created_at": "2025-01-18",
+      "body_markdown": "サブスクを作成する際に`off_session=true`を指定した方が良いかもしれないとのこと。\nどういう状況で使用した方が良いかいまいち理解できず。\n\n今後の情勢からすると必ず3DSの検証が行われるならばtrueで良いような気がする。\nhttps://github.com/laravel/cashier-stripe/issues/989?utm_source=chatgpt.com\n"
+    }
+  ]
+}
